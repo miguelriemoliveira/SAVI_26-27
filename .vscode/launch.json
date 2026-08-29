@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Corre o ficheiro aberto no editor, com a pasta desse ficheiro
+            // como diretoria de trabalho. Sem o "cwd", o depurador arranca na
+            // raiz do repositorio e os caminhos relativos falham.
+            "name": "Python: ficheiro atual (na pasta do ficheiro)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}"
+        }
+    ]
+}

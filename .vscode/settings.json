@@ -1,0 +1,6 @@
+{
+    // Corre o script na pasta onde o ficheiro esta, e nao na raiz do
+    // repositorio. Necessario para que os caminhos relativos usados nos
+    // exercicios (por exemplo "../images/lake.jpg") funcionem.
+    "python.terminal.executeInFileDir": true
+}

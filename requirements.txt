@@ -1,0 +1,22 @@
+# SAVI 2026-2027 - bibliotecas necessarias
+# Instalar dentro de um ambiente virtual com Python 3.10 ou superior:
+#   pip install -r requirements.txt
+
+# Base - usado desde a Parte 1
+numpy
+matplotlib
+scipy
+pillow
+tqdm
+
+# Visao por computador - Partes 2 a 6
+opencv-python
+
+# Processamento 3D e nuvens de pontos - Partes 7 e 8
+open3d
+
+# Deep learning - Partes 9 a 13
+torch
+torchvision
+scikit-learn
+wandb
