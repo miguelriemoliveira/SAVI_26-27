@@ -1,0 +1,6 @@
+cat
+cat
+dog
+dog
+cat
+dog
