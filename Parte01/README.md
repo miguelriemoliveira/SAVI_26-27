@@ -362,7 +362,7 @@ https://www.open3d.org/docs/release/getting_started.html
 
 O OpenCV tem vários tutorials que são uma ajuda valiosa para começar.
 
-https://docs.opencv.org/4.x/d6/d00/tutorial_py_root.html
+https://docs.opencv.org/4.13.0/d6/d00/tutorial_py_root.html
 
 Faça os exercícios dos cinco primeiros tutoriais:
 
