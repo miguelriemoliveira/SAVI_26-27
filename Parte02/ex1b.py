@@ -3,6 +3,7 @@
 
 # imports --------------------
 import cv2
+import numpy as np
 
 # Main function
 def main(): # this is our main function
@@ -37,9 +38,31 @@ def main(): # this is our main function
     #cv2.imshow("Resized Image", resize_image)
 
     # brighten the image
-    bright_image = gray_image + 20
+    bright_image = gray_image - 50
     cv2.imshow("Bright Image", bright_image)
 
+
+    # ____________________________________
+    # Challenge to solve overflow
+    # ____________________________________
+
+    print("gray dtype = " + str(gray_image.dtype))
+    image_float = gray_image.astype(float)
+    print("image_float dtype = " + str(image_float.dtype))
+
+    # safe brigthen the image
+    image_brightened = image_float - 50
+
+    # some elements will have values over 255, 
+    # so we need to clip the values to 255
+    image_brightened = image_brightened.clip(0, 255)
+
+    # convert back to uint8
+    image_brightened = image_brightened.astype(np.uint8)
+
+    cv2.imshow("image brightned challenge", image_brightened)
+
+    
 
 
     cv2.waitKey(0)
