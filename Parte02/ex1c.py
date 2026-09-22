@@ -14,7 +14,7 @@ def safe_alter_image(image, value):
 
     # safe brigthen the image
     altered_image = image_float
-    altered_image[:, 1:round(width/2), :] = image_float[:, 1:round(width/2), :] + value
+    altered_image[:, 1:round(width/3), :] = image_float[:, 1:round(width/3), :] + value
 
     # some elements will have values over 255, 
     # so we need to clip the values to 255
@@ -49,7 +49,17 @@ def main(): # this is our main function
         cv2.imshow("Altered Image  ", altered_image)
         cv2.waitKey(500)
 
+    # --------------------------------
+    # Challenge for homework
+    # --------------------------------
+
+    # a) record a video of the sequence
+
+    # b)  make the darkened color be a curtain that moved from left to right
+
     cv2.waitKey(0)
+
+
 
 
     
