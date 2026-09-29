@@ -14,8 +14,8 @@ def main(): # this is our main function
     print("SAVI exercise")
 
     # relative path
-    #image = cv2.imread("images/dog_3.jpg")
-    image = cv2.imread("images/person_3.jpg")
+    image = cv2.imread("images/person_4.jpg")
+    # image = cv2.imread("images/person_3.jpg")
     height, width, channels = image.shape
     image = cv2.resize(image, (round(width/2), round(height/2) ))
     cv2.imshow('Original', image)
@@ -35,7 +35,7 @@ def main(): # this is our main function
     cv2.imshow('V', v)
 
     # get masks by imposing limits on the channels
-    mask_h = np.logical_and( h >30, h <50) # assumming green color has hue 60 
+    mask_h = np.logical_and( h >20, h <60) # assumming green color has hue 60 
     showMask('mask_h', mask_h)
 
     mask_s = np.logical_and( s >60, s <255) 
@@ -126,17 +126,29 @@ def main(): # this is our main function
     print('Area ratio = ', str(round(area_ratio,2)))
 
     # Feature3: average color of the hue component in the object
-    avg_h = np.average(h) # average of the hue component
+    avg_h = np.mean(h) # average of the hue component
     print('avg_h for the entire image = ', str(avg_h))
 
     # To get the average of only one region use masked arrays
     ma = np.ma.masked_array(h, mask=largest_mask, dtype=np.uint8)
-    avg_h_object = np.average(ma)
+    avg_h_object = np.mean(ma)
     print('avg_h_objet = ', str(avg_h_object))
 
     # THIS IS WRONG!!!!
     # CANNOT COMPUTE AND AVERAGE OF A CIRCULAR VARIABLE
     
+
+    ## ----------------------------------------
+    ## Ex 3c
+    ## ----------------------------------------
+    # HOW TO CLASSIFY? The idea is to decide which class is in the image.
+    # Lets use the only one that maes sense, the h_w_ratio
+
+    if h_w_ratio > 1.5:
+        print('Classification result: Its a person!')
+    else:
+        print('Classification result: Its a dog!')
+
 
     cv2.waitKey(0)
 
