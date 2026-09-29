@@ -107,17 +107,38 @@ def main(): # this is our main function
 
     cv2.imshow('Image Annotated', image_annototed)
 
-    cv2.waitKey(0)
 
+    ## ----------------------------------------
+    ## Ex 3b
+    ## ----------------------------------------
 
+    # Compute some features of the objects we extract
 
+    # Feature1: height_to_width_ratio
+    h_w_ratio = height / width
+    print('Height to width ration = ' , str(round(h_w_ratio,2)))
 
+    # Feature2: object_area_to_image_area_ratio
+    # You are compute object to object bbox area ratio
+    area_image = W*H # where did I get this?
+    area_object = largest_area
+    area_ratio = area_object/area_image
+    print('Area ratio = ', str(round(area_ratio,2)))
+
+    # Feature3: average color of the hue component in the object
+    avg_h = np.average(h) # average of the hue component
+    print('avg_h for the entire image = ', str(avg_h))
+
+    # To get the average of only one region use masked arrays
+    ma = np.ma.masked_array(h, mask=largest_mask, dtype=np.uint8)
+    avg_h_object = np.average(ma)
+    print('avg_h_objet = ', str(avg_h_object))
+
+    # THIS IS WRONG!!!!
+    # CANNOT COMPUTE AND AVERAGE OF A CIRCULAR VARIABLE
     
 
-
-
-
-
+    cv2.waitKey(0)
 
 if __name__ == "__main__":
     main()
