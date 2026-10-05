@@ -4,6 +4,18 @@
 # imports --------------------
 import cv2
 import numpy as np
+import signal
+import sys
+
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    sys.exit(0)
+
+
+def signal_handler_term(sig, frame):
+    print('You pressed Ctrl+C!')
+    sys.exit(0)
+
 
 def showMask(window_name, image):
     image_to_show = image.astype(np.uint8)*255
@@ -11,6 +23,8 @@ def showMask(window_name, image):
 
 # Main function
 def main(): # this is our main function
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler_term)
     print("SAVI exercise")
 
     # -------------------------------------------------------------------------
