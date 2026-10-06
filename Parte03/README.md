@@ -33,17 +33,22 @@ Nos exercícios anteriores, a posição de cada zona de contagem está escrita n
 código, em píxeis. Se a câmara mudar de sítio, ou se o vídeo for outro, é
 preciso voltar a medir tudo à mão.
 
-Altere o programa para que, no arranque, o utilizador desenhe com o rato, sobre
-o primeiro frame do vídeo, uma zona de contagem por cada faixa de rodagem. A
-contagem por faixa deve depois funcionar com as zonas escolhidas, sem mais
-nenhuma alteração ao código.
+Divida o programa em dois scripts:
 
-Pode reaproveitar o sistema de carregar e arrastar do Exercício 4c da Parte 2
-(`cv2.setMouseCallback`), ou usar a função `cv2.selectROIs`.
+- `escolher_zonas.py`: mostra o primeiro frame do vídeo, deixa o utilizador
+  desenhar com o rato uma zona de contagem por cada faixa de rodagem e guarda
+  as zonas num ficheiro JSON (por exemplo `zonas.json`);
+- `main.py`: lê as zonas do ficheiro JSON e faz a contagem por faixa com elas,
+  sem mais nenhuma alteração ao código.
 
-Para uma versão mais elaborada, guarde as zonas num ficheiro JSON. Nas
-execuções seguintes, o programa deve ler as zonas do ficheiro e só pedir zonas
-novas se o ficheiro não existir.
+Assim, o `escolher_zonas.py` só precisa de ser corrido quando a câmara ou o
+vídeo mudam. Se o ficheiro JSON não existir, o `main.py` deve avisar o
+utilizador e terminar.
+
+Para escolher as zonas pode usar a função `cv2.selectROIs`, ou reaproveitar o
+sistema de carregar e arrastar do Exercício 4c da Parte 2
+(`cv2.setMouseCallback`). Para ler e escrever o ficheiro use o módulo `json`
+(`json.dump` e `json.load`).
 
 ## Desafio 2 - Quão bom é o contador?
 
