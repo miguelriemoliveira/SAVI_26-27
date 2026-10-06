@@ -54,7 +54,10 @@ def main(): # this is our main function
 
     # Other setupds
     font = cv2.FONT_HERSHEY_SIMPLEX
-
+    previous_is_significant_change = False
+    number_of_cars = 0
+    stamp_last_car_detected = 0
+    threshold_blackout = 0.5 # secs
 
     # read json file with the lane bounding boxes
     bboxes_filename = 'lane_bboxes.json'
@@ -130,27 +133,35 @@ def main(): # this is our main function
         else:
             print(Style.DIM + 'Nothing new' + Style.RESET_ALL)
 
-        # -------------------------------------------------------------------------
-        # Visualization
-        # -------------------------------------------------------------------------
 
-        # Draw the bounding boxes of the lanes
-        cv2.rectangle(image_gui, (x,y), (x+w, y+h), (255,0,0), 2)
+        # RISING EDGE Detect a car based on the rising edgoe
+        if is_significant_change == True and previous_is_significant_change == False:
+            is_rising_edge = True
+            print(Fore.GREEN + Style.BRIGHT + 'Car detected!' + Style.RESET_ALL)
+        else:
+            is_rising_edge = False
+            print(Style.DIM + 'no car ...' + Style.RESET_ALL)
 
-        # draw the frame number and corresponding time
-        frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
-        time_in_seconds = frame_number / fps
-        cv2.putText(image_gui, f"Frame: {frame_number}, Time: {time_in_seconds:.2f}s", 
-                    (40, 40), font, 1, (0, 255, 0), 2)
+        # FUSION, blackout + rising edge
+        time_frame = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+        time_since_last_car_detected =  round(time_frame - stamp_last_car_detected,1)
+        if is_significant_change and time_since_last_car_detected > threshold_blackout \
+            and is_rising_edge:
+            is_car_detected = True
+            print(Fore.GREEN + Style.BRIGHT + 'Car detected!' + Style.RESET_ALL)
+        else:
+            is_car_detected = False
+            print(Style.DIM + 'no car ...' + Style.RESET_ALL)
+
+        # Increment number of cars if a car is detected
+        if is_car_detected:
+            number_of_cars += 1
+            stamp_last_car_detected = time_frame
 
 
-        # draw the avg color near the bbox
-        cv2.putText(image_gui, 'Avg color = ' + str(avg_color), (x, y-10), font, 1, (255, 0, 0), 2)
 
-
-        if is_significant_change:
-            cv2.putText(image_gui, 'There is a change', (x, y-30), font, 1, (0, 0, 255), 2)
-
+        # Update the prev_ious_significant_change variable
+        previous_is_significant_change = is_significant_change
 
         # -------------------------------------------------------------------------
         # Visualization
@@ -170,6 +181,15 @@ def main(): # this is our main function
         cv2.putText(image_gui, 'Avg color = ' + str(avg_color), 
                     (x, y-10), font, 1, (255, 0, 0), 2)
 
+        if is_significant_change:
+            cv2.putText(image_gui, 'There is a change', (x, y-30), font, 1, (0, 0, 255), 2)
+
+        if is_car_detected:
+            cv2.putText(image_gui, 'There is a car', (x, y-55), font, 1, (0, 255, 0), 2)
+
+        cv2.putText(image_gui, '#cars = ' +str(number_of_cars), (x, y-75), font, 1, (0, 255, 0), 2)
+
+        cv2.putText(image_gui, 'Time since last detection = ' +str(time_since_last_car_detected), (x, y-105), font, 1, (0, 255, 0), 2)
 
         cv2.imshow('Image', image_gui) # Display the resulting frame
 
