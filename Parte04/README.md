@@ -46,3 +46,7 @@ Utilizando as imagens da pasta machu pichu, faça a estimativa da transformaçã
 ## Exercício 6 - Stitch images of castle
 
 Faça o stitching das imagens da pasta _castle_. Pode ser necessário adaptar o algoritmo de stitching desenvolvido no exercício anterior.
+
+A questão é que no par de imagens castle a imagem query não fica contida na imagem train, e isso faz com que o algoritmo de fusão que temos atualmente não funcione. 
+
+Como transformar o código de modo a funcionar também para o castelo?
