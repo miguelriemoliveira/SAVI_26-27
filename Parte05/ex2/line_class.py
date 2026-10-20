@@ -37,6 +37,7 @@ class Line:
 
         xs = [-10, 10] # we only need two points to draw a line 
         ys = self.getYs(xs)
+        # ys = [2, 2]
 
         fig.plot(xs, ys, 'b-')
 
