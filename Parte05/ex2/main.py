@@ -59,12 +59,35 @@ def main(): # this is our main function
     from line_class import Line
 
     line = Line() # Create instance
-   
+    best_line = Line() # Instance for best line
+    lowest_error = 101023109238230 # a very large number 
+    # TODO check for a better solution (Ghuilerme)
 
-    # line.randomizeParams()
-    line.draw(plt)
+    while True:
 
-    plt.show()
+        line.randomizeParams()
+        line.draw(plt)
+
+        # Compute error of the current line
+        error = line.computeError(d['xs'], d['ys'])
+        print('error = ' + str(round(error,3)))
+
+        if error < lowest_error: # found a better line
+            best_line.m = line.m
+            best_line.b = line.b
+            lowest_error = error
+
+
+        best_line.draw(plt, color='r')
+
+
+        plt.draw()
+        pressed_key = plt.waitforbuttonpress(0.1)
+        if pressed_key == True: # break cycle if key is pressed
+            break
+
+
+
 
 if __name__ == "__main__":
     main()
