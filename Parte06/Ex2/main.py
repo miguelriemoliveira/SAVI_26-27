@@ -76,8 +76,8 @@ def main(): # this is our main function
     # We need to compute the mask of valid pixels in the query image
     q_image_gray = cv2.cvtColor(q_image, cv2.COLOR_BGR2GRAY)
     mask = q_image_gray != 0
-    cv2.imshow('mask', mask.astype(np.uint8)*255)
-    cv2.waitKey(0)
+    # cv2.imshow('mask', mask.astype(np.uint8)*255)
+    # cv2.waitKey(0)
 
     q_image = q_image.astype(float) 
 
@@ -95,6 +95,8 @@ def main(): # this is our main function
         # Define the parameters in a list: assume  [m, b]
         s_q = params[0]
         b_q = params[1]    
+        s_t = params[2]
+        b_t = params[3]    
 
         print('\n\n')
 
@@ -106,15 +108,28 @@ def main(): # this is our main function
         corrected_q_image = np.minimum(corrected_q_image, 255)
         corrected_q_image = np.maximum(corrected_q_image, 0)
 
+        corrected_t_image = np.copy(data['t_image']) # copy the entire image from the original
+
+        # CASE 1
+        # corrected_t_image[data['mask']] = s_t * t_image[data['mask']] + b_t # change the colors only in the valid pixels mask
+
+        # CASE 2
+        corrected_t_image = s_t * t_image + b_t # change the colors only in the valid pixels mask
+
+        corrected_t_image = np.minimum(corrected_t_image, 255)
+        corrected_t_image = np.maximum(corrected_t_image, 0)
 
         # Compute the error
-        pixel_errors = (t_image[data['mask']] - corrected_q_image[data['mask']] ).flatten()
+        pixel_errors = (corrected_t_image[data['mask']] - corrected_q_image[data['mask']] ).flatten()
+        # pixel_errors = (t_image[data['mask']] - corrected_q_image[data['mask']] ).flatten()
 
         print('avg error = ' + str(np.mean(pixel_errors)))
 
         # Visualization 
-        mosaic = buildMosaic(t_image, corrected_q_image, data['mask'])
+        mosaic = buildMosaic(corrected_t_image, corrected_q_image, data['mask'])
         showFloatImage('image', mosaic)
+
+        print('\n\n')
 
         key = cv2.waitKey(20)
         if key == ord('q'):
@@ -129,6 +144,9 @@ def main(): # this is our main function
 
     # Params will contain the s and b -> [s_q, b_q] For now we change only the query image
     x0 = [1.0, 0.0] # initial guess for the parameters
+
+    # Params will contain the s and b -> [s_q, b_q, s_t, b_t] now we change both images
+    x0 = [1.0, 0.0, 1.0, 0.0] # initial guess for the parameters
 
     result = least_squares(fun=partial(objective_function, data=data), x0=x0, verbose=0, 
                            xtol=1e-3, ftol=1e-3, gtol=1e-8)
