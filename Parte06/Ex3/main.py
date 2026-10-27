@@ -57,7 +57,11 @@ def main(): # this is our main function
     ap.add_argument("-sf", "--scaling_factor", type=float, required=False, 
                     default=0.3, help="", )
  
-
+    ap.add_argument("-gab", "--goal_average_brightness", type=int, required=False, 
+                    default=50, help="", )
+    ap.add_argument("-gac", "--goal_average_contrast", type=int, required=False, 
+                    default=60, help="", )
+ 
  
     args = ap.parse_args()
     args = vars(args) # transform the args into a dictionary
@@ -76,6 +80,9 @@ def main(): # this is our main function
     # We need to compute the mask of valid pixels in the query image
     q_image_gray = cv2.cvtColor(q_image, cv2.COLOR_BGR2GRAY)
     mask = q_image_gray != 0
+    # Border pixels of the warped image are a mix of image and black (interpolation
+    # in warpPerspective and resize), so they are dark but not 0. Erode the mask to drop them.
+    mask = cv2.erode(mask.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool)
     # cv2.imshow('mask', mask.astype(np.uint8)*255)
     # cv2.waitKey(0)
 
@@ -85,6 +92,8 @@ def main(): # this is our main function
     data = {'q_image': q_image,
             't_image': t_image,
             'mask': mask,
+            'goal_average_brightness': args['goal_average_brightness'],
+            'goal_average_contrast': args['goal_average_contrast']
             }
 
     
@@ -109,21 +118,35 @@ def main(): # this is our main function
         corrected_q_image = np.maximum(corrected_q_image, 0)
 
         corrected_t_image = np.copy(data['t_image']) # copy the entire image from the original
-
-        # CASE 1
-        # corrected_t_image[data['mask']] = s_t * t_image[data['mask']] + b_t # change the colors only in the valid pixels mask
-
-        # CASE 2
         corrected_t_image = s_t * t_image + b_t # change the colors only in the valid pixels mask
-
         corrected_t_image = np.minimum(corrected_t_image, 255)
         corrected_t_image = np.maximum(corrected_t_image, 0)
 
-        # Compute the error
+        # Compute the error per pixel (image to image similarity)
         pixel_errors = (corrected_t_image[data['mask']] - corrected_q_image[data['mask']] ).flatten()
         # pixel_errors = (t_image[data['mask']] - corrected_q_image[data['mask']] ).flatten()
+        # print('avg error = ' + str(np.mean(pixel_errors)))
 
-        print('avg error = ' + str(np.mean(pixel_errors)))
+        # compute the number of value in the pixel_errors
+        n = pixel_errors.shape[0]
+
+        # Compute the error for the average brightness and contrast
+        # for the target image
+        t_average_color = np.average(corrected_t_image[data['mask']])
+        t_error_brightness = data['goal_average_brightness'] - t_average_color
+        t_std_color = np.std(corrected_t_image[data['mask']])
+        t_error_contrast = data['goal_average_contrast'] - t_std_color
+
+        # for the query image
+        q_average_color = np.average(corrected_q_image[data['mask']])
+        q_error_brightness = data['goal_average_brightness'] - q_average_color
+        q_std_color = np.std(corrected_q_image[data['mask']])
+        q_error_contrast = data['goal_average_contrast'] - q_std_color
+
+        # Build an error vector (normalize the importance of the brigtness and contrast errors)
+        brigtness_errors = np.sqrt(n) * np.array([t_error_brightness, t_error_contrast, q_error_brightness, q_error_contrast])
+        final_errors = np.concatenate([brigtness_errors, pixel_errors])
+
 
         # Visualization 
         mosaic = buildMosaic(corrected_t_image, corrected_q_image, data['mask'])
@@ -136,7 +159,7 @@ def main(): # this is our main function
             print('Your pressed q, exiting.')
             exit(0)
 
-        return pixel_errors
+        return final_errors
     
     # -------------------------------------------------------------------------
     # Execution
