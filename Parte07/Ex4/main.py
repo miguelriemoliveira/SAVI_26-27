@@ -84,7 +84,7 @@ def main(): # this is our main function
     # -------------------------------------------------------------------------
 
     # Downsampling
-    point_cloud_sampled = point_cloud.voxel_down_sample(voxel_size=0.3)
+    point_cloud_sampled = point_cloud.voxel_down_sample(voxel_size=0.2)
 
 
     # -------------------------------------------------------------------------
