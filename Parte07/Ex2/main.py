@@ -67,18 +67,19 @@ def main(): # this is our main function
     point_cloud_inliers = point_cloud.select_by_index(inlier_idxs, invert=False)
     point_cloud_inliers.paint_uniform_color([0.5, 0.5, 0])
 
+    # Factory building and trees are the outliers of the ground plane
     point_cloud_outliers = point_cloud.select_by_index(inlier_idxs, invert=True)
-    point_cloud_outliers.paint_uniform_color([0.5, 0, 1])
-
-    o3d.io.write_point_cloud('factory_no_floor.pcd', point_cloud_outliers)
+#     point_cloud_outliers.paint_uniform_color([0.5, 0, 1])
+    o3d.io.write_point_cloud('factory_no_floor.pcd', point_cloud_outliers, write_ascii=False)
 
 
     # -------------------------------------------------------------------------
     # Visualization
     # -------------------------------------------------------------------------
     # Create drawing entities
-#     entities = [point_cloud, point_cloud_inliers]
-    entities = [point_cloud_outliers, point_cloud_inliers]
+    entities = [point_cloud]
+#     entities = [point_cloud_outliers, point_cloud_inliers]
+#     entities = [point_cloud_outliers]
 
     o3d.visualization.draw_geometries(entities,
                                       zoom=0.34,
