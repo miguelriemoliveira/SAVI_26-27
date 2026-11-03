@@ -50,21 +50,35 @@ def main(): # this is our main function
 
     # Load the point cloud
     point_cloud = o3d.io.read_point_cloud(args['point_cloud_file'])
-
     print('Point cloud: ' + str(point_cloud))
-
 
     # -------------------------------------------------------------------------
     # Execution
     # -------------------------------------------------------------------------
 
+    # Find the ground plane
+    plane_model, inlier_idxs = point_cloud.segment_plane(distance_threshold=0.3, ransac_n=3, num_iterations=100)
+
+    # Hessian plane coefficients ->  Ax + By + Cz + D = 0
+    a,b,c,d = plane_model 
+
+    print('a=' + str(a) + ' b=' + str(b) +' c=' + str(c) +' d=' + str(d) )
+
+    point_cloud_inliers = point_cloud.select_by_index(inlier_idxs, invert=False)
+    point_cloud_inliers.paint_uniform_color([0.5, 0.5, 0])
+
+    point_cloud_outliers = point_cloud.select_by_index(inlier_idxs, invert=True)
+    point_cloud_outliers.paint_uniform_color([0.5, 0, 1])
+
+    o3d.io.write_point_cloud('factory_no_floor.pcd', point_cloud_outliers)
+
 
     # -------------------------------------------------------------------------
     # Visualization
     # -------------------------------------------------------------------------
-
     # Create drawing entities
-    entities = [point_cloud]
+#     entities = [point_cloud, point_cloud_inliers]
+    entities = [point_cloud_outliers, point_cloud_inliers]
 
     o3d.visualization.draw_geometries(entities,
                                       zoom=0.34,
