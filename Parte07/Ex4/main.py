@@ -9,6 +9,7 @@ import random
 import signal
 import sys
 from matplotlib import cm
+from more_itertools import locate
 import numpy as np
 import open3d as o3d
 
@@ -80,18 +81,60 @@ def main(): # this is our main function
     print('Point cloud: ' + str(point_cloud))
 
     # -------------------------------------------------------------------------
-    # Execution
-    # -------------------------------------------------------------------------
-
     # Downsampling
+    # -------------------------------------------------------------------------
     point_cloud_sampled = point_cloud.voxel_down_sample(voxel_size=0.2)
+
+    # -------------------------------------------------------------------------
+    # Clustering
+    # -------------------------------------------------------------------------
+    labels = point_cloud_sampled.cluster_dbscan(eps=2.0, min_points=100, print_progress=True)
+
+    # print('labels = ' + str(labels[0:100]))
+
+    # Remove points that do not belong to a group
+    group_idxs = list(set(labels))
+    group_idxs.remove(-1) # remove the last label, these are the ungrouped points
+    # colormap = cm.Pastel1(range(0, 300))
+
+    point_cloud_of_groups = [] 
+    for counter, group_idx in enumerate(group_idxs):
+
+        # This is to convert fro mthe labels representation to the point_cloud indices of this group representation, 
+        # which is the format required by function select_by_index
+        group_points_idx = list(locate(labels, lambda x: x == group_idx))
+
+        group_point_cloud = point_cloud_sampled.select_by_index(group_points_idx, invert=False)
+
+        # Paint point cloud of group
+        color = [random.uniform(0,1), random.uniform(0,1), random.uniform(0,1)]
+        # group_point_cloud.paint_uniform_color(color)
+
+        point_cloud_of_groups.append(group_point_cloud)
+
+    # -------------------------------------------------------------------------
+    # Detect the largest group
+    # -------------------------------------------------------------------------
+    point_cloud_of_largest_group = None
+    n_points_largest_group = None
+    for point_cloud_of_group in point_cloud_of_groups:
+
+        if point_cloud_of_largest_group == None:
+            point_cloud_of_largest_group = point_cloud_of_group
+            n_points_largest_group = len(point_cloud_of_largest_group.points)
+
+        elif n_points_largest_group < len(point_cloud_of_group.points):
+            point_cloud_of_largest_group = point_cloud_of_group
+            n_points_largest_group = len(point_cloud_of_largest_group.points)
 
 
     # -------------------------------------------------------------------------
     # Visualization
     # -------------------------------------------------------------------------
     # Create drawing entities
-    entities = [point_cloud_sampled]
+    # entities = [point_cloud_sampled]
+    # entities.extend(point_cloud_of_groups)
+    entities = [point_cloud_of_largest_group]
 
     o3d.visualization.draw_geometries(entities,
                                       zoom=0.34,
