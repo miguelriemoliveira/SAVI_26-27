@@ -1,0 +1,32 @@
+{
+  "base": "base.json",
+  "name": "level_3_widths",
+  "boxes": [
+    {
+      "x": -0.12,
+      "y": 0,
+      "yaw_deg": 0,
+      "length": 0.3,
+      "width": 0.22,
+      "height": 0.15,
+      "color": [
+        0.7,
+        0.53,
+        0.36
+      ]
+    },
+    {
+      "x": 0.12,
+      "y": 0.03,
+      "yaw_deg": 0,
+      "length": 0.18,
+      "width": 0.12,
+      "height": 0.15,
+      "color": [
+        0.7,
+        0.53,
+        0.36
+      ]
+    }
+  ]
+}

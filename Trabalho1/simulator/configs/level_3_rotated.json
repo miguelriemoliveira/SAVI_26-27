@@ -1,0 +1,32 @@
+{
+  "base": "base.json",
+  "name": "level_3_rotated",
+  "boxes": [
+    {
+      "x": -0.12,
+      "y": 0,
+      "yaw_deg": 0,
+      "length": 0.3,
+      "width": 0.2,
+      "height": 0.15,
+      "color": [
+        0.7,
+        0.53,
+        0.36
+      ]
+    },
+    {
+      "x": 0.1653,
+      "y": 0.0057,
+      "yaw_deg": 30,
+      "length": 0.22,
+      "width": 0.16,
+      "height": 0.15,
+      "color": [
+        0.7,
+        0.53,
+        0.36
+      ]
+    }
+  ]
+}

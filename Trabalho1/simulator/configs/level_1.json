@@ -1,0 +1,19 @@
+{
+  "base": "base.json",
+  "name": "level_1",
+  "boxes": [
+    {
+      "x": 0.03,
+      "y": -0.02,
+      "yaw_deg": 20,
+      "length": 0.3,
+      "width": 0.2,
+      "height": 0.15,
+      "color": [
+        0.7,
+        0.53,
+        0.36
+      ]
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "seed": 1,
+  "intrinsics": {
+    "width": 640,
+    "height": 480,
+    "fx": 525.0,
+    "fy": 525.0,
+    "cx": 319.5,
+    "cy": 239.5
+  },
+  "table": {
+    "length": 1.2,
+    "width": 0.8,
+    "thickness": 0.03,
+    "height": 0.75
+  },
+  "room": {
+    "length": 6.0,
+    "width": 5.0,
+    "height": 3.0
+  },
+  "furniture": [
+    {
+      "type": "wardrobe",
+      "x": 1.7,
+      "y": 2.5,
+      "yaw_deg": 180
+    },
+    {
+      "type": "plant",
+      "x": 0.45,
+      "y": 2.15
+    },
+    {
+      "type": "floor_lamp",
+      "x": -2.55,
+      "y": 2.05
+    },
+    {
+      "type": "picture",
+      "x": -2.4,
+      "y": 2.5,
+      "z": 1.35,
+      "yaw_deg": 180
+    },
+    {
+      "type": "bookcase",
+      "x": -3.0,
+      "y": 0.7,
+      "yaw_deg": -90
+    },
+    {
+      "type": "armchair",
+      "x": -2.15,
+      "y": -1.05,
+      "yaw_deg": -64
+    },
+    {
+      "type": "door",
+      "x": -1.6,
+      "y": -2.5
+    },
+    {
+      "type": "sideboard",
+      "x": 0.9,
+      "y": -2.5
+    },
+    {
+      "type": "picture",
+      "x": 0.9,
+      "y": -2.5,
+      "z": 1.35
+    },
+    {
+      "type": "plant",
+      "x": 2.5,
+      "y": -2.05,
+      "height": 1.2
+    },
+    {
+      "type": "sofa",
+      "x": 3.0,
+      "y": 0.0,
+      "yaw_deg": 90
+    },
+    {
+      "type": "window",
+      "x": 3.0,
+      "y": 0.0,
+      "z": 1.0,
+      "yaw_deg": 90
+    }
+  ],
+  "light": {
+    "position": [
+      0.7,
+      -0.5,
+      1.5
+    ],
+    "ambient": 0.5,
+    "diffuse": 0.6
+  },
+  "cameras": {
+    "count": 8,
+    "radius": 1.1,
+    "height": 0.7,
+    "target": [
+      0.0,
+      0.0,
+      0.05
+    ],
+    "eye_jitter": 0.03,
+    "target_jitter": 0.03
+  },
+  "noise": {
+    "depth_std": 0.0015,
+    "max_depth": 6.0,
+    "edge_threshold": 0.03,
+    "flying_pixels": 0.3,
+    "edge_dropouts": 0.2,
+    "color_std": 0.01,
+    "blur_px": 0.6,
+    "misalignment_px": 0.7,
+    "exposure_changes": false,
+    "gain_std": 0.15,
+    "bias_std": 0.04
+  },
+  "boxes": [],
+  "poster": {
+    "text_lines": [
+      "SAVI Boxes",
+      "Challenge"
+    ],
+    "x": -0.9,
+    "z": -0.2,
+    "width": 1.4,
+    "height": 0.7
+  }
+}
