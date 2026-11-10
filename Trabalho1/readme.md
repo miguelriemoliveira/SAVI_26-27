@@ -16,7 +16,7 @@ Miguel Riem Oliveira <mriem@ua.pt>
 
 ## Introdução
 
-Há caixas sobre uma mesa. Uma câmara RGB-D adquire várias imagens em redor da mesa. O objetivo é estimar, para cada caixa, a sua pose e as suas dimensões, com um erro da ordem dos milímetros.
+Há caixas sobre uma mesa, algumas delas empilhadas sobre outras. Uma câmara RGB-D adquire várias imagens em redor da mesa. O objetivo é estimar, para cada caixa, a sua pose e as suas dimensões, com um erro da ordem dos milímetros.
 
 Com uma caixa isolada, o problema parece simples. Fica difícil quando as caixas se tocam, porque deixa de ser claro onde acaba uma e começa a outra.
 
@@ -32,7 +32,7 @@ O sistema é desenvolvido e avaliado com dados do simulador que é fornecido, po
 
 ## O simulador
 
-É fornecido o simulador **SAVI Box Simulator**. Com ele configura-se uma cena: a mesa, as caixas sobre ela, com as suas posições, dimensões e cores, e a sala em redor. Depois coloca-se o sensor numa posição, a olhar numa direção, e o simulador calcula, por _ray casting_, o que uma câmara RGB-D veria dali: a imagem a cores e a nuvem de pontos, com ruído semelhante ao de um sensor real.
+É fornecido o simulador **SAVI Box Simulator**. Com ele configura-se uma cena: a mesa, as caixas sobre ela ou empilhadas, com as suas posições, dimensões e cores, e a sala em redor. Depois coloca-se o sensor numa posição, a olhar numa direção, e o simulador calcula, por _ray casting_, o que uma câmara RGB-D veria dali: a imagem a cores e a nuvem de pontos, com ruído semelhante ao de um sensor real.
 
 É por isso que se usa um simulador: produz dados de sensor simulados, com os quais se testam os algoritmos. A grande vantagem é que, juntamente com esses dados, se tem o _ground truth_ completo da cena que os gerou: a pose de cada câmara, a pose e as dimensões de cada caixa. Com dados reais, estes valores nunca se conhecem com exatidão. Com o simulador, o erro de cada estimativa do seu sistema pode ser medido. Não tem de programar o simulador: use-o para criar as cenas com que desenvolve e avalia o seu sistema.
 
@@ -50,7 +50,7 @@ Os comandos seguintes são todos corridos dentro da pasta `simulator`.
 
 ![Image](docs/frontend.png)
 
-1. Em **Boxes**, adicione e remova caixas, e altere a posição, a rotação, as dimensões e a cor de cada uma. As caixas assentam sempre na mesa;
+1. Em **Boxes**, adicione e remova caixas, e altere a posição, a rotação, as dimensões e a cor de cada uma. O valor **z** é a altura da base da caixa acima do tampo da mesa: com z = 0 a caixa assenta na mesa, e para a empilhar sobre outra dá-se a z a altura do topo da caixa de baixo. O botão **Stack** faz isto automaticamente: pousa a caixa selecionada sobre a caixa mais alta que está por baixo do seu centro (só contam as caixas anteriores na lista), ou na mesa se não houver nenhuma;
 2. Navegue na vista 3D com o rato e carregue em **Capture** para adquirir uma imagem a partir desse ponto de vista. O botão **Ring** acrescenta um conjunto de câmaras em redor da mesa. As imagens adquiridas aparecem numa lista, e cada câmara aparece na vista 3D com o número da sua imagem. Ao clicar numa imagem da lista, a vista 3D passa para o ponto de vista dessa câmara. Com a opção **Show point cloud of the selected image**, a vista 3D mostra a nuvem de pontos dessa imagem, no lugar da sala, da mesa e das caixas;
 3. Escolha o nome da cena e carregue em **Export scene**. A cena fica na pasta `scenes`. A opção **With noise** acrescenta o ruído do sensor e a opção **Exposure changes** faz variar o brilho e o contraste de imagem para imagem (ver "Extras");
 4. Com **Save config** e **Open config** pode gravar e abrir a configuração da cena.
@@ -104,7 +104,7 @@ scene/
 
 - O referencial da câmara tem x para a direita, y para baixo e z para a frente.
 - O referencial de cada caixa tem origem no seu centro, o eixo x ao longo do comprimento (`length`), o eixo y ao longo da largura (`width`) e o eixo z ao longo da altura (`height`), perpendicular à mesa e a apontar para cima.
-- O ficheiro `ground_truth.json` contém a pose de cada câmara, a pose e as dimensões de cada caixa. **O seu sistema só o pode usar, tal como o `config.json`, para calcular erros, nunca para estimar seja o que for.**
+- O ficheiro `ground_truth.json` contém a pose de cada câmara, a pose e as dimensões de cada caixa. Para cada caixa, além das matrizes `T_world_box` e `T_camera0_box`, dá também `x`, `y`, `z` e `yaw_deg` no referencial do mundo, que tem origem no centro do tampo da mesa e z para cima: `x` e `y` são o centro da caixa, `yaw_deg` a rotação em torno de z, em graus, e `z` a altura da base da caixa acima do tampo (0 para uma caixa assente na mesa). O centro da caixa fica, por isso, à altura `z + height / 2`. **O seu sistema só o pode usar, tal como o `config.json`, para calcular erros, nunca para estimar seja o que for.**
 
 Exemplo de oito imagens adquiridas em redor da mesa:
 
@@ -245,7 +245,7 @@ Trate o método de forma justa: remova _outliers_ e tente reduzir a sua sensibil
 
 Implemente um procedimento de otimização que ajusta as caixas sobre a mesa à nuvem de pontos, estimando ao mesmo tempo a posição, a orientação e as dimensões de cada caixa.
 
-1. **Parâmetros:** como as caixas assentam na mesa, cada caixa fica definida no referencial da mesa por `x`, `y`, `yaw`, `length`, `width` e `height`;
+1. **Parâmetros:** como as caixas ficam sempre com o eixo z perpendicular à mesa, cada caixa fica definida no referencial da mesa por `x`, `y`, `z`, `yaw`, `length`, `width` e `height`, em que `z` é a altura da base da caixa acima da mesa: 0 para uma caixa assente na mesa, o topo da caixa de baixo para uma caixa empilhada;
 2. **Função objetivo:** devolve um erro por cada ponto, a distância do ponto à superfície da caixa. Com várias caixas, cada ponto é associado à caixa que melhor o explica;
 3. **Otimização:** use `scipy.optimize.least_squares`. **As associações são recalculadas em cada avaliação da função objetivo**, dentro da própria otimização, sem um ciclo exterior. Não há nenhuma garantia de que uma associação feita no início esteja correta;
 4. **Estimativa inicial:** é da sua responsabilidade (lembre-se da Parte 06, Exercício 6);
@@ -255,9 +255,10 @@ Implemente um procedimento de otimização que ajusta as caixas sobre a mesa à 
 **Comparação com o _ground truth_:** para cada caixa, compare o resultado dos dois métodos com o `ground_truth.json`:
 
 - Erro de posição: distância entre o centro estimado e o centro verdadeiro, em milímetros;
+- Erro de altura: diferença entre o `z` estimado e o verdadeiro, em milímetros;
 - Erro de orientação: diferença entre o _yaw_ estimado e o verdadeiro, em graus;
 - Erro das dimensões: diferença de `length`, `width` e `height`, em milímetros;
-- IoU 3D (_Intersection over Union_): o volume da interseção entre a caixa estimada e a caixa verdadeira, a dividir pelo volume da sua união. Vale 1 quando as caixas coincidem e 0 quando não se sobrepõem, e resume num só número os erros de posição, de orientação e de dimensões. Como as caixas assentam na mesa, o volume da interseção é a área da interseção dos dois retângulos vistos de cima (pode usar `cv2.rotatedRectangleIntersection`, que devolve o polígono da interseção, e `cv2.contourArea`, que dá a sua área) multiplicada pela sobreposição das alturas.
+- IoU 3D (_Intersection over Union_): o volume da interseção entre a caixa estimada e a caixa verdadeira, a dividir pelo volume da sua união. Vale 1 quando as caixas coincidem e 0 quando não se sobrepõem, e resume num só número os erros de posição, de orientação e de dimensões. Como as caixas têm sempre o eixo z vertical, o volume da interseção é a área da interseção dos dois retângulos vistos de cima (pode usar `cv2.rotatedRectangleIntersection`, que devolve o polígono da interseção, e `cv2.contourArea`, que dá a sua área) multiplicada pela sobreposição dos intervalos de altura das duas caixas, de `z` a `z + height`.
 
 Nos erros de orientação e de dimensões, tenha em conta as simetrias da caixa (ver "O programa a desenvolver"): compare com todas as versões equivalentes da caixa verdadeira e fique com a de menor erro. O IoU 3D não precisa deste cuidado, porque só depende do espaço ocupado pela caixa. Por isso, também é uma boa forma de associar cada caixa estimada à caixa verdadeira correspondente. Mostre ainda as caixas estimadas sobrepostas às caixas verdadeiras.
 
@@ -285,7 +286,7 @@ De 2 a 4 caixas sem contacto entre si. Basta separá-las por _clustering_ euclid
 
 De 2 a 4 caixas que se tocam e formam um único _cluster_. O _clustering_ euclidiano e a cor deixam de as conseguir separar.
 
-Experimente pelo menos estes casos: caixas de alturas diferentes, caixas da mesma altura e larguras diferentes, caixas rodadas entre si, caixas iguais e perfeitamente alinhadas.
+Experimente pelo menos estes casos: caixas de alturas diferentes, caixas da mesma altura e larguras diferentes, caixas rodadas entre si, caixas iguais e perfeitamente alinhadas, caixas empilhadas umas sobre as outras.
 
 ![Image](docs/level_3_cases.png)
 
