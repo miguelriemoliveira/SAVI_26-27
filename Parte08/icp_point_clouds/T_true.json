@@ -1,0 +1,30 @@
+{
+  "description": "True transformation from part_2 to part_1: p_part_1 = T_part_1_part_2 @ p_part_2, in homogeneous coordinates, distances in meters",
+  "source": "UW RGB-D Scenes v2, scene 05, downsampled with a 10 mm voxel",
+  "T_part_1_part_2": [
+    [
+      0.017937728,
+      -0.082488397,
+      0.996430581,
+      -0.607787336
+    ],
+    [
+      0.354770123,
+      0.93226975,
+      0.070790348,
+      -0.648910125
+    ],
+    [
+      -0.934781471,
+      0.352233982,
+      0.04598722,
+      3.137611778
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ]
+}
