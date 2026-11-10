@@ -18,6 +18,10 @@ World frame: origin at the centre of the table top, z up.
 Camera frame: x right, y down, z forward.
 Units: meters.
 
+Each box is given by x, y, z and yaw_deg. x and y are the center of the box, z is the height of its base above the
+table top: z = 0 for a box resting on the table, z = height of the box below for a box stacked on top of another.
+The box frame (T_world_box) has its origin at the center of the box, so its translation is (x, y, z + height / 2).
+
 Each scene is a folder with:
     point_clouds/000.ply   colored point cloud, in the frame of the camera that acquired it
     rgb/000.png            corresponding color image
@@ -77,6 +81,27 @@ def make_transform(x, y, z, yaw=0.0):
     T[:3, :3] = [[c, -s, 0], [s, c, 0], [0, 0, 1]]
     T[:3, 3] = [x, y, z]
     return T
+
+
+def box_transform(box):
+    """T_world_box: origin at the center of the box. The z of the box is the height of its base above the table top."""
+    return make_transform(box["x"], box["y"], box.get("z", 0.0) + box["height"] / 2, np.radians(box.get("yaw_deg", 0.0)))
+
+
+def box_top_below(boxes, index):
+    """Height of the top of the highest box under the center of box index, or 0 (the table) if there is none.
+
+    Only the boxes that come before it in the list count, so a new box always goes on top of the existing ones.
+    """
+    box, top = boxes[index], 0.0
+    for other in boxes[:index]:
+        # Center of the box in the frame of the other one, to compare with its half dimensions
+        yaw = np.radians(other.get("yaw_deg", 0.0))
+        dx, dy = box["x"] - other["x"], box["y"] - other["y"]
+        u, v = np.cos(yaw) * dx + np.sin(yaw) * dy, -np.sin(yaw) * dx + np.cos(yaw) * dy
+        if abs(u) <= other["length"] / 2 and abs(v) <= other["width"] / 2:
+            top = max(top, other.get("z", 0.0) + other["height"])
+    return top
 
 
 def look_at(eye, target, up=(0.0, 0.0, 1.0)):
@@ -494,12 +519,13 @@ class Scene:
             self.parts.append((np.asarray(mesh.vertices, np.float32), np.asarray(mesh.triangles, np.uint32),
                                {"color": color, "texture": None, "scale": None, "corner": None}, wall))
 
-        # Boxes, resting on the table
+        # Boxes, on the table or stacked on other boxes (z is the height of the base above the table top)
         self.boxes = []
         for box in config["boxes"]:
-            T = make_transform(box["x"], box["y"], box["height"] / 2, np.radians(box.get("yaw_deg", 0.0)))
+            T = box_transform(box)
             self._add((box["length"], box["width"], box["height"]), T, color=box["color"])
-            self.boxes.append({"T_world_box": T, "length": box["length"], "width": box["width"],
+            self.boxes.append({"T_world_box": T, "x": box["x"], "y": box["y"], "z": box.get("z", 0.0),
+                               "yaw_deg": box.get("yaw_deg", 0.0), "length": box["length"], "width": box["width"],
                                "height": box["height"], "color": box["color"]})
 
         # One ray casting scene for each set of hidden walls, built when needed
@@ -681,7 +707,9 @@ def write_scene(config, folder, with_noise=True, with_ground_truth=True):
         ground_truth = {
             "cameras": [{"image": f"{i:03d}", "T_world_camera": T.tolist(), "T_camera0_camera": (T0_inv @ T).tolist()}
                         for i, T in enumerate(poses)],
-            "boxes": [{"T_world_box": b["T_world_box"].tolist(), "T_camera0_box": (T0_inv @ b["T_world_box"]).tolist(),
+            # x, y, yaw_deg: center and rotation of the box in the world (table) frame; z: height of its base above the table top
+            "boxes": [{"x": b["x"], "y": b["y"], "z": b["z"], "yaw_deg": b["yaw_deg"],
+                       "T_world_box": b["T_world_box"].tolist(), "T_camera0_box": (T0_inv @ b["T_world_box"]).tolist(),
                        "length": b["length"], "width": b["width"], "height": b["height"], "color": b["color"]}
                       for b in scene.boxes],
             "photometry": photometry,
@@ -906,11 +934,13 @@ class Frontend:
         self.box_list.set_max_visible_items(5)
         self.box_list.set_on_selection_changed(self._on_select)
         self.panel.add_child(self.box_list)
-        self.panel.add_child(self._buttons(em, (("Add", self._add_box), ("Remove", self._remove_box))))
+        self.panel.add_child(self._buttons(em, (("Add", self._add_box), ("Remove", self._remove_box),
+                                                ("Stack", self._stack_box))))
 
         grid = gui.VGrid(2, 0.3 * em)
         self.controls = {}
         for key, text, minimum, maximum in (("x", "x (m)", -0.6, 0.6), ("y", "y (m)", -0.4, 0.4),
+                                            ("z", "z, base (m)", 0.0, 0.6),
                                             ("yaw_deg", "rotation (deg)", -180.0, 180.0),
                                             ("length", "length (m)", 0.02, 0.6),
                                             ("width", "width (m)", 0.02, 0.6), ("height", "height (m)", 0.02, 0.6)):
@@ -1001,11 +1031,21 @@ class Frontend:
     # --------------------------------------
     def _add_box(self):
         n = len(self.config["boxes"])
-        self.config["boxes"].append({"x": 0.05 * n, "y": 0.05 * n, "yaw_deg": 0.0, "length": 0.25, "width": 0.18,
+        self.config["boxes"].append({"x": 0.05 * n, "y": 0.05 * n, "z": 0.0, "yaw_deg": 0.0, "length": 0.25, "width": 0.18,
                                      "height": 0.15, "color": list(BOX_COLOR)})
         self.selected = n
         self._update_list()
         self._update_controls()
+        self._draw_boxes()
+
+    def _stack_box(self):
+        """Sets the z of the selected box so that it rests on the highest box under its center (or on the table)."""
+        if self.selected < 0:
+            return
+        z = box_top_below(self.config["boxes"], self.selected)
+        self.config["boxes"][self.selected]["z"] = z
+        self.controls["z"].double_value = z
+        self.message.text = f"Box {self.selected + 1}: z = {z:.3f} m"
         self._draw_boxes()
 
     def _remove_box(self):
@@ -1086,8 +1126,8 @@ class Frontend:
             if scene.has_geometry(f"box_{i}"):
                 scene.remove_geometry(f"box_{i}")
         for i, b in enumerate(self.config["boxes"]):
-            T = make_transform(b["x"], b["y"], b["height"] / 2, np.radians(b.get("yaw_deg", 0.0)))
-            scene.add_geometry(f"box_{i}", cuboid_mesh((b["length"], b["width"], b["height"]), T, b["color"]), self.material)
+            scene.add_geometry(f"box_{i}", cuboid_mesh((b["length"], b["width"], b["height"]), box_transform(b), b["color"]),
+                               self.material)
         if self.show_cloud.checked:
             self._show_image()
 
