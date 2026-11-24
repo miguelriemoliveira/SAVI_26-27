@@ -937,8 +937,10 @@ class Frontend:
         self.panel.add_child(self._buttons(em, (("Add", self._add_box), ("Remove", self._remove_box),
                                                 ("Stack", self._stack_box))))
 
-        grid = gui.VGrid(2, 0.3 * em)
+        # Each value has a slider and a box where the number can be typed; both stay in sync
+        grid = gui.VGrid(3, 0.3 * em)
         self.controls = {}
+        self.edits = {}
         for key, text, minimum, maximum in (("x", "x (m)", -0.6, 0.6), ("y", "y (m)", -0.4, 0.4),
                                             ("z", "z, base (m)", 0.0, 0.6),
                                             ("yaw_deg", "rotation (deg)", -180.0, 180.0),
@@ -946,14 +948,22 @@ class Frontend:
                                             ("width", "width (m)", 0.02, 0.6), ("height", "height (m)", 0.02, 0.6)):
             control = gui.Slider(gui.Slider.DOUBLE)
             control.set_limits(minimum, maximum)
-            control.set_on_value_changed(lambda value, k=key: self._change(k, value))
+            control.set_on_value_changed(lambda value, k=key: self._on_slider(k, value))
+            edit = gui.NumberEdit(gui.NumberEdit.DOUBLE)
+            edit.set_limits(minimum, maximum)
+            edit.decimal_precision = 1 if key == "yaw_deg" else 3
+            edit.set_preferred_width(5 * em)
+            edit.set_on_value_changed(lambda value, k=key: self._on_edit(k, value))
             grid.add_child(gui.Label(text))
             grid.add_child(control)
+            grid.add_child(edit)
             self.controls[key] = control
+            self.edits[key] = edit
         self.color = gui.ColorEdit()
         self.color.set_on_value_changed(self._change_color)
         grid.add_child(gui.Label("color"))
         grid.add_child(self.color)
+        grid.add_child(gui.Label(""))
         self.panel.add_child(grid)
         self.panel.add_fixed(0.5 * em)
 
@@ -1016,8 +1026,9 @@ class Frontend:
         active = self.selected >= 0
         for key, control in self.controls.items():
             control.enabled = active
+            self.edits[key].enabled = active
             if active:
-                control.double_value = self.config["boxes"][self.selected].get(key, 0.0)
+                self._set_value(key, self.config["boxes"][self.selected].get(key, 0.0))
         self.color.enabled = active
         if active:
             self.color.color_value = gui.Color(*self.config["boxes"][self.selected]["color"])
@@ -1044,7 +1055,7 @@ class Frontend:
             return
         z = box_top_below(self.config["boxes"], self.selected)
         self.config["boxes"][self.selected]["z"] = z
-        self.controls["z"].double_value = z
+        self._set_value("z", z)
         self.message.text = f"Box {self.selected + 1}: z = {z:.3f} m"
         self._draw_boxes()
 
@@ -1056,6 +1067,19 @@ class Frontend:
         self._update_list()
         self._update_controls()
         self._draw_boxes()
+
+    def _set_value(self, key, value):
+        """Shows a value in both the slider and the number box (setting them in code does not call their callbacks)."""
+        self.controls[key].double_value = value
+        self.edits[key].set_value(value)
+
+    def _on_slider(self, key, value):
+        self.edits[key].set_value(value)
+        self._change(key, value)
+
+    def _on_edit(self, key, value):
+        self.controls[key].double_value = value
+        self._change(key, value)
 
     def _change(self, key, value):
         if self.selected >= 0:
@@ -1318,8 +1342,8 @@ def self_test(frontend):
     def move():
         frontend._change("x", 0.2)
         frontend._change("yaw_deg", 35.0)
-        frontend.controls["x"].double_value = 0.2
-        frontend.controls["yaw_deg"].double_value = 35.0
+        frontend._set_value("x", 0.2)
+        frontend._set_value("yaw_deg", 35.0)
 
     def export():
         frontend.scene_name.text_value = "self_test"
